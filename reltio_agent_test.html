@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Reltio Intelligence Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #07090f;
+  --surface: #0e1118;
+  --surface2: #141820;
+  --border: #1c2130;
+  --border2: #252d3d;
+  --accent: #00d4f0;
+  --accent-dim: #008aaa;
+  --amber: #f0a500;
+  --green: #10c07a;
+  --red: #e84040;
+  --purple: #8b5cf6;
+  --text: #e0e4f0;
+  --muted: #5a6480;
+  --dim: #8a94b0;
+  --mono: 'JetBrains Mono', monospace;
+  --head: 'Syne', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  height: 54px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.logo-mark {
+  width: 32px;
+  height: 32px;
+  background: var(--accent);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--head);
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--bg);
+}
+
+.logo-text {
+  font-family: var(--head);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+  letter-spacing: .03em;
+}
+
+.logo-sub {
+  font-size: 10px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+
+.topbar-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+}
+
+.cfg-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.cfg-label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  white-space: nowrap;
+}
+
+.cfg-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  outline: none;
+  transition: border-color .15s;
+}
+.cfg-input:focus { border-color: var(--accent); }
+.cfg-input.key-input { width: 260px; }
+.cfg-input.url-input { flex: 1; }
+.model-select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color .15s;
+  min-width: 210px;
+}
+.model-select:focus { border-color: var(--accent); }
+.model-select option { background: var(--surface2); color: var(--text); }
+
+.btn-connect {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: .06em;
+  transition: opacity .15s;
+  white-space: nowrap;
+}
+.btn-connect:hover { opacity: .85; }
+
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid;
+  font-size: 10px;
+  font-family: var(--mono);
+  white-space: nowrap;
+  letter-spacing: .05em;
+}
+.sp-off { color: var(--muted); border-color: var(--border); }
+.sp-on { color: var(--green); border-color: rgba(16,192,122,.3); background: rgba(16,192,122,.07); }
+.sp-err { color: var(--red); border-color: rgba(232,64,64,.3); background: rgba(232,64,64,.07); }
+.sp-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.sp-on .sp-dot { animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── LAYOUT ── */
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 256px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sb-section {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sb-section-title {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--muted);
+  margin-bottom: 9px;
+}
+
+.entity-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.entity-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background .1s;
+  border: 1px solid transparent;
+}
+.entity-row:hover { background: var(--surface2); border-color: var(--border); }
+
+.e-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.e-name { font-size: 11px; color: var(--dim); }
+.e-count { font-size: 10px; color: var(--muted); margin-left: auto; }
+
+.rel-section { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.rel-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 0;
+  font-size: 10px;
+  color: var(--muted);
+  border-bottom: 1px solid rgba(28,33,48,.6);
+}
+.rel-item:last-child { border-bottom: none; }
+.rel-arrow { color: var(--accent); font-size: 9px; }
+.rel-entity { color: var(--dim); }
+
+.scenarios-header {
+  padding: 10px 14px 4px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--muted);
+}
+
+.scenarios-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 6px;
+}
+.scenarios-list::-webkit-scrollbar { width: 3px; }
+.scenarios-list::-webkit-scrollbar-thumb { background: var(--border); }
+
+.sc-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 7px 8px;
+  border-radius: 5px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: all .12s;
+  border-bottom: 1px solid rgba(28,33,48,.4);
+}
+.sc-btn:last-child { border-bottom: none; }
+.sc-btn:hover { background: var(--surface2); color: var(--text); }
+.sc-num { color: var(--accent); margin-right: 4px; }
+
+/* ── MAIN CHAT ── */
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.messages::-webkit-scrollbar { width: 4px; }
+.messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* Welcome */
+.welcome {
+  text-align: center;
+  padding: 48px 24px;
+  max-width: 580px;
+  margin: 0 auto;
+}
+.welcome-logo {
+  width: 56px; height: 56px;
+  background: rgba(0,212,240,.1);
+  border: 1px solid rgba(0,212,240,.2);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--head); font-weight: 800; font-size: 22px;
+  color: var(--accent);
+  margin: 0 auto 18px;
+}
+.welcome h2 {
+  font-family: var(--head);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 10px;
+  letter-spacing: .02em;
+}
+.welcome h2 span { color: var(--accent); }
+.welcome p { font-size: 12px; color: var(--muted); line-height: 1.75; }
+.hint-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 16px;
+}
+.hint-btn {
+  font-size: 11px;
+  padding: 5px 11px;
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  color: var(--dim);
+  background: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  transition: all .15s;
+}
+.hint-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Messages */
+.msg { display: flex; flex-direction: column; animation: slideUp .2s ease; }
+@keyframes slideUp { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+.msg.user { align-self: flex-end; align-items: flex-end; max-width: 80%; }
+.msg.ai { align-self: flex-start; align-items: flex-start; max-width: 88%; }
+
+.msg-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.msg.user .msg-label { color: var(--accent-dim); }
+
+.bubble {
+  padding: 11px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.75;
+}
+.msg.user .bubble {
+  background: rgba(0,212,240,.1);
+  border: 1px solid rgba(0,212,240,.2);
+  color: var(--text);
+  border-bottom-right-radius: 3px;
+}
+.msg.ai .bubble {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-bottom-left-radius: 3px;
+}
+
+/* Tool card */
+.tool-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 10px 13px;
+  font-size: 11px;
+  max-width: 88%;
+}
+.tc-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+  color: var(--accent);
+  font-weight: 500;
+  font-size: 12px;
+}
+.tc-icon { font-size: 12px; }
+.tc-path {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+  margin-bottom: 7px;
+}
+.tp-node {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(0,212,240,.08);
+  border: 1px solid rgba(0,212,240,.2);
+  color: var(--accent);
+}
+.tp-arrow { font-size: 9px; color: var(--muted); }
+.tc-args {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 7px 9px;
+  font-size: 10px;
+  color: var(--muted);
+  white-space: pre-wrap;
+  max-height: 70px;
+  overflow: hidden;
+  line-height: 1.5;
+}
+.tc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: 10px;
+  margin-top: 6px;
+}
+.b-ok { color: var(--green); border-color: rgba(16,192,122,.3); background: rgba(16,192,122,.07); }
+.b-err { color: var(--red); border-color: rgba(232,64,64,.3); background: rgba(232,64,64,.07); }
+.b-wait { color: var(--muted); border-color: var(--border); }
+
+/* Thinking */
+.thinking {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  border-bottom-left-radius: 3px;
+  font-size: 12px;
+  color: var(--muted);
+  max-width: 280px;
+}
+.dots span {
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: dot-blink 1.2s infinite;
+  margin-right: 3px;
+}
+.dots span:nth-child(2) { animation-delay: .2s; }
+.dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes dot-blink { 0%,80%,100%{opacity:.15} 40%{opacity:1} }
+
+/* Bubble markdown */
+.bubble strong { color: var(--accent); font-weight: 500; }
+.bubble em { color: var(--amber); font-style: normal; }
+.bubble code {
+  background: rgba(0,212,240,.08);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 11.5px;
+  color: var(--accent);
+}
+.bubble h3, .bubble h4 {
+  font-family: var(--head);
+  font-size: 14px;
+  color: var(--text);
+  margin: 10px 0 5px;
+  font-weight: 700;
+}
+.bubble ul, .bubble ol { padding-left: 18px; margin: 6px 0; }
+.bubble li { margin: 3px 0; color: var(--dim); }
+.bubble table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+  margin: 8px 0;
+}
+.bubble th {
+  background: var(--surface2);
+  color: var(--accent);
+  padding: 5px 8px;
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  border-bottom: 1px solid var(--border);
+}
+.bubble td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--dim);
+}
+.bubble tr:last-child td { border-bottom: none; }
+
+/* Error */
+.sys-msg {
+  font-size: 11px;
+  padding: 8px 12px;
+  background: rgba(240,165,0,.08);
+  border: 1px solid rgba(240,165,0,.25);
+  border-radius: 6px;
+  color: var(--amber);
+  max-width: 88%;
+  line-height: 1.6;
+}
+
+/* ── INPUT ── */
+.input-area {
+  padding: 14px 24px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.input-row { display: flex; gap: 10px; align-items: flex-end; }
+.input-wrap {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  display: flex;
+  align-items: center;
+  transition: border-color .15s;
+}
+.input-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0,212,240,.05); }
+
+#user-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  outline: none;
+  resize: none;
+  max-height: 100px;
+  line-height: 1.55;
+}
+#user-input::placeholder { color: var(--muted); }
+
+.btn-send {
+  width: 42px; height: 42px;
+  background: var(--accent);
+  border: none;
+  border-radius: 9px;
+  color: var(--bg);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: opacity .15s, transform .1s;
+  font-weight: bold;
+}
+.btn-send:hover { opacity: .85; transform: scale(1.04); }
+.btn-send:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+
+.input-hint {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 7px;
+  text-align: center;
+  letter-spacing: .04em;
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-mark">R</div>
+    <div>
+      <div class="logo-text">Reltio Intelligence Agent</div>
+      <div class="logo-sub" id="logo-sub">llama-3.3-70b-versatile &nbsp;·&nbsp; mock Reltio data &nbsp;·&nbsp; full relationship traversal</div>
+    </div>
+  </div>
+
+  <div class="topbar-divider"></div>
+
+  <div class="cfg-group">
+    <span class="cfg-label">Groq API Key</span>
+    <input class="cfg-input key-input" type="password" id="groq-key" placeholder="gsk_..."/>
+    <span class="cfg-label">Model</span>
+    <select class="model-select" id="model-select" onchange="onModelChange()">
+      <optgroup label="Llama 3.3">
+        <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile</option>
+      </optgroup>
+      <optgroup label="Llama 3.1">
+        <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (fastest)</option>
+        <option value="llama-3.1-70b-versatile">llama-3.1-70b-versatile</option>
+      </optgroup>
+      <optgroup label="Llama 3 / 3.2">
+        <option value="llama3-8b-8192">llama3-8b-8192</option>
+        <option value="llama3-70b-8192">llama3-70b-8192</option>
+        <option value="llama-3.2-1b-preview">llama-3.2-1b-preview (tiny)</option>
+        <option value="llama-3.2-3b-preview">llama-3.2-3b-preview</option>
+        <option value="llama-3.2-11b-vision-preview">llama-3.2-11b-vision</option>
+        <option value="llama-3.2-90b-vision-preview">llama-3.2-90b-vision</option>
+      </optgroup>
+      <optgroup label="Mixtral / Gemma">
+        <option value="mixtral-8x7b-32768">mixtral-8x7b-32768</option>
+        <option value="gemma2-9b-it">gemma2-9b-it</option>
+        <option value="gemma-7b-it">gemma-7b-it</option>
+      </optgroup>
+      <optgroup label="DeepSeek">
+        <option value="deepseek-r1-distill-llama-70b">deepseek-r1-distill-llama-70b</option>
+        <option value="deepseek-r1-distill-qwen-32b">deepseek-r1-distill-qwen-32b</option>
+      </optgroup>
+    </select>
+    <button class="btn-connect" onclick="connect()">&#9654; Connect</button>
+    <span class="status-pill sp-off" id="status-pill">
+      <span class="sp-dot"></span>
+      <span id="status-text">disconnected</span>
+    </span>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-section">
+      <div class="sb-section-title">Entity Types</div>
+      <div class="entity-grid">
+        <div class="entity-row" onclick="quickAsk('Show me sample customers from customers_olist')">
+          <div class="e-dot" style="background:#00d4f0"></div>
+          <span class="e-name">customers_olist</span>
+          <span class="e-count">99k</span>
+        </div>
+        <div class="entity-row" onclick="quickAsk('Show me recent orders from orders_olist')">
+          <div class="e-dot" style="background:#00d4f0"></div>
+          <span class="e-name">orders_olist</span>
+          <span class="e-count">99k</span>
+        </div>
+        <div class="entity-row" onclick="quickAsk('Show me products from products_olist')">
+          <div class="e-dot" style="background:#f0a500"></div>
+          <span class="e-name">products_olist</span>
+          <span class="e-count">32k</span>
+        </div>
+        <div class="entity-row" onclick="quickAsk('Show me orders from orders_instacart')">
+          <div class="e-dot" style="background:#8b5cf6"></div>
+          <span class="e-name">orders_instacart</span>
+          <span class="e-count">1.4M</span>
+        </div>
+        <div class="entity-row" onclick="quickAsk('Show me products from products_instacart')">
+          <div class="e-dot" style="background:#f0a500"></div>
+          <span class="e-name">products_instacart</span>
+          <span class="e-count">49k</span>
+        </div>
+        <div class="entity-row" onclick="quickAsk('Show me clickstream events from events_clickstream')">
+          <div class="e-dot" style="background:#10c07a"></div>
+          <span class="e-name">events_clickstream</span>
+          <span class="e-count">84k</span>
+        </div>
+        <div class="entity-row" onclick="quickAsk('Show me Global_Customer_Identifier records')">
+          <div class="e-dot" style="background:#e84040"></div>
+          <span class="e-name">Global_Customer_ID</span>
+          <span class="e-count">211k</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rel-section">
+      <div class="sb-section-title">Relationship Types</div>
+      <div class="rel-item"><span class="rel-entity">customer</span><span class="rel-arrow">&#8594;</span><span class="rel-entity">order</span></div>
+      <div class="rel-item"><span class="rel-entity">order</span><span class="rel-arrow">&#8594;</span><span class="rel-entity">product_olist</span></div>
+      <div class="rel-item"><span class="rel-entity">order_ic</span><span class="rel-arrow">&#8594;</span><span class="rel-entity">product_ic</span></div>
+      <div class="rel-item"><span class="rel-entity">customer</span><span class="rel-arrow">&#8594;</span><span class="rel-entity">events</span></div>
+      <div class="rel-item"><span class="rel-entity">event</span><span class="rel-arrow">&#8594;</span><span class="rel-entity">GCI</span><span class="rel-arrow">&#8594;</span><span class="rel-entity">customer</span></div>
+    </div>
+
+    <div class="scenarios-header">19 Analytical Scenarios</div>
+    <div class="scenarios-list" id="scenarios-list"></div>
+  </div>
+
+  <!-- CHAT MAIN -->
+  <div class="chat-main">
+    <div class="messages" id="messages">
+      <div class="welcome" id="welcome-screen">
+        <div class="welcome-logo">R</div>
+        <h2>Reltio <span>Intelligence</span></h2>
+        <p>Paste your Groq API key above and click Connect.<br>
+        The real <strong id="welcome-model">llama-3.3-70b-versatile</strong> model will run an agentic loop,<br>
+        calling Reltio tools and traversing entity relationships to answer your questions.</p>
+        <div class="hint-grid">
+          <button class="hint-btn" onclick="quickAsk('What did customer Paul Lee buy?')">What did Paul Lee buy?</button>
+          <button class="hint-btn" onclick="quickAsk('Show me the conversion funnel from view to purchase')">Conversion funnel</button>
+          <button class="hint-btn" onclick="quickAsk('Which cities have the highest repeat purchase rate?')">Repeat purchase by city</button>
+          <button class="hint-btn" onclick="quickAsk('Which customers should I target for win-back campaigns?')">Win-back list</button>
+          <button class="hint-btn" onclick="quickAsk('Which products are trending up week over week?')">Sales growth trends</button>
+          <button class="hint-btn" onclick="quickAsk('Show me market basket analysis - top product pairs')">Market basket</button>
+          <button class="hint-btn" onclick="quickAsk('Show me all orders with status canceled')">Canceled orders</button>
+          <button class="hint-btn" onclick="quickAsk('What events has visitor 483605 generated?')">Visitor events</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-row">
+        <div class="input-wrap">
+          <textarea id="user-input" rows="1"
+            placeholder="Connect with your Groq API key, then ask anything about customers, orders, products, events..."
+            onkeydown="handleKey(event)"
+            oninput="autoResize(this)"></textarea>
+        </div>
+        <button class="btn-send" id="send-btn" onclick="sendMessage()" disabled>&#10148;</button>
+      </div>
+      <div class="input-hint">Enter to send &nbsp;&nbsp;·&nbsp;&nbsp; Shift+Enter for new line &nbsp;&nbsp;·&nbsp;&nbsp; Real LLM agent &nbsp;·&nbsp; Mock Reltio data</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── MOCK RELTIO DATA ───────────────────────────────────────────────────────
+var RELTIO = {
+  customers_olist: [
+    {uri:'entities/1Cc6ssf', attributes:{customer_name:'Paul Lee', customer_city:'Sao Paulo', customer_state:'SP', customer_id:'5510a075', customer_unique_id:'42befda5'}},
+    {uri:'entities/2Dd7ttg', attributes:{customer_name:'Ana Lima', customer_city:'Rio de Janeiro', customer_state:'RJ', customer_id:'6621b186', customer_unique_id:'53c0fb6'}},
+    {uri:'entities/3Ee8uuh', attributes:{customer_name:'Carlos Mendes', customer_city:'Curitiba', customer_state:'PR', customer_id:'7732c297', customer_unique_id:'64d1gc7'}},
+    {uri:'entities/4Ff9vvi', attributes:{customer_name:'Maria Costa', customer_city:'Belo Horizonte', customer_state:'MG', customer_id:'8843d308', customer_unique_id:'75e2hd8'}},
+    {uri:'entities/5Gg0wwj', attributes:{customer_name:'Joao Ferreira', customer_city:'Porto Alegre', customer_state:'RS', customer_id:'9954e419', customer_unique_id:'86f3ie9'}},
+    {uri:'entities/6Hh1xxk', attributes:{customer_name:'Lucia Alves', customer_city:'Salvador', customer_state:'BA', customer_id:'1065f520', customer_unique_id:'97g4jf0'}},
+  ],
+  orders_olist: [
+    {uri:'entities/ord_001', attributes:{order_id:'1a018d08', customer_id:'5510a075', order_status:'delivered', order_purchase_timestamp:'2024-03-15 10:37:16', order_delivered_customer_date:'2024-03-22 18:24:36', order_estimated_delivery_date:'2024-03-30 00:00:00'}},
+    {uri:'entities/ord_002', attributes:{order_id:'2b129e19', customer_id:'5510a075', order_status:'delivered', order_purchase_timestamp:'2024-01-10 09:12:00', order_delivered_customer_date:'2024-01-18 14:00:00', order_estimated_delivery_date:'2024-01-25 00:00:00'}},
+    {uri:'entities/ord_003', attributes:{order_id:'3c230f20', customer_id:'6621b186', order_status:'shipped', order_purchase_timestamp:'2024-03-14 15:20:00', order_estimated_delivery_date:'2024-03-28 00:00:00'}},
+    {uri:'entities/ord_004', attributes:{order_id:'4d341g31', customer_id:'7732c297', order_status:'canceled', order_purchase_timestamp:'2024-02-20 11:00:00'}},
+    {uri:'entities/ord_005', attributes:{order_id:'5e452h42', customer_id:'8843d308', order_status:'delivered', order_purchase_timestamp:'2024-03-01 08:30:00', order_delivered_customer_date:'2024-03-09 12:00:00', order_estimated_delivery_date:'2024-03-10 00:00:00'}},
+    {uri:'entities/ord_006', attributes:{order_id:'6f563i53', customer_id:'9954e419', order_status:'processing', order_purchase_timestamp:'2024-03-16 14:00:00', order_estimated_delivery_date:'2024-04-01 00:00:00'}},
+  ],
+  products_olist: [
+    {uri:'entities/prod_001', attributes:{product_id:'94a75895', product_category_english:'electronics', product_category_name:'eletronicos', product_weight_g:'850', product_width_cm:'20', product_height_cm:'10', product_length_cm:'30', product_photos_qty:'3'}},
+    {uri:'entities/prod_002', attributes:{product_id:'b3f86906', product_category_english:'stationery shop', product_category_name:'papelaria', product_weight_g:'120', product_width_cm:'40', product_height_cm:'40', product_length_cm:'40', product_photos_qty:'5'}},
+    {uri:'entities/prod_003', attributes:{product_id:'c4g97017', product_category_english:'sports leisure', product_category_name:'esporte_lazer', product_weight_g:'340', product_width_cm:'15', product_height_cm:'15', product_length_cm:'25', product_photos_qty:'2'}},
+    {uri:'entities/prod_004', attributes:{product_id:'d5h08128', product_category_english:'home comfort', product_category_name:'cama_mesa_banho', product_weight_g:'1200', product_width_cm:'50', product_height_cm:'30', product_length_cm:'60', product_photos_qty:'4'}},
+    {uri:'entities/prod_005', attributes:{product_id:'e6i19239', product_category_english:'fashion', product_category_name:'moda', product_weight_g:'200', product_width_cm:'25', product_height_cm:'5', product_length_cm:'30', product_photos_qty:'6'}},
+  ],
+  orders_instacart: [
+    {uri:'entities/ic_001', attributes:{order_id:'1934371', user_id:'188004', order_number:'13', order_dow:'0', order_hour_of_day:'13', days_since_prior_order:'1', eval_set:'prior'}},
+    {uri:'entities/ic_002', attributes:{order_id:'1934372', user_id:'188005', order_number:'5', order_dow:'3', order_hour_of_day:'10', days_since_prior_order:'7', eval_set:'prior'}},
+    {uri:'entities/ic_003', attributes:{order_id:'1934373', user_id:'188004', order_number:'14', order_dow:'2', order_hour_of_day:'11', days_since_prior_order:'6', eval_set:'train'}},
+  ],
+  products_instacart: [
+    {uri:'entities/pip_001', attributes:{product_id:'32877', product_name:'Yellow Zucchini', aisle_id:'83', department_id:'4'}},
+    {uri:'entities/pip_002', attributes:{product_id:'13176', product_name:'Bag of Organic Lemons', aisle_id:'24', department_id:'4'}},
+    {uri:'entities/pip_003', attributes:{product_id:'21137', product_name:'Organic Strawberries', aisle_id:'24', department_id:'4'}},
+    {uri:'entities/pip_004', attributes:{product_id:'14992', product_name:'Sparkling Water', aisle_id:'115', department_id:'7'}},
+  ],
+  events_clickstream: [
+    {uri:'entities/ev_001', attributes:{event_id:'32890', visitorid:'483605', itemid:'365166', event:'view', timestamp:'1433886158539'}},
+    {uri:'entities/ev_002', attributes:{event_id:'32891', visitorid:'483605', itemid:'365166', event:'add_to_cart', timestamp:'1433886258539'}},
+    {uri:'entities/ev_003', attributes:{event_id:'32892', visitorid:'291034', itemid:'14992', event:'view', timestamp:'1433886358539'}},
+    {uri:'entities/ev_004', attributes:{event_id:'32893', visitorid:'483605', itemid:'365166', event:'purchase', timestamp:'1433886458539'}},
+    {uri:'entities/ev_005', attributes:{event_id:'32894', visitorid:'183901', itemid:'32877', event:'view', timestamp:'1433886558539'}},
+    {uri:'entities/ev_006', attributes:{event_id:'32895', visitorid:'183901', itemid:'32877', event:'view', timestamp:'1433886658539'}},
+  ],
+  Global_Customer_Identifier: [
+    {uri:'entities/gci_001', attributes:{global_customer_id:'7ad18542-4261-44d0-83d3-7d9a52319a2a', source_customer_id:'1371', source:'dunnhumby', customer_id:'17208', confidence:'0.92', match_method:'synthetic', is_cross_source:'true', num_sources:'3'}},
+    {uri:'entities/gci_002', attributes:{global_customer_id:'8be29653-5372-55e1-94e4-8e0b63420b3b', source_customer_id:'5510a075', source:'olist', customer_id:'17209', confidence:'0.85', match_method:'exact', is_cross_source:'true', num_sources:'2'}},
+    {uri:'entities/gci_003', attributes:{global_customer_id:'9cf30764-6483-66f2-05f5-9f1c74531c4c', source_customer_id:'6621b186', source:'olist', customer_id:'17210', confidence:'0.78', match_method:'fuzzy', is_cross_source:'false', num_sources:'1'}},
+  ],
+  relationships: {
+    '1Cc6ssf': {Customer_To_Order_Olist: ['ord_001','ord_002'], customerOlist_to_eventsClickstream: ['ev_001','ev_002','ev_004']},
+    '2Dd7ttg': {Customer_To_Order_Olist: ['ord_003']},
+    '3Ee8uuh': {Customer_To_Order_Olist: ['ord_004']},
+    '4Ff9vvi': {Customer_To_Order_Olist: ['ord_005']},
+    '5Gg0wwj': {Customer_To_Order_Olist: ['ord_006']},
+    'ord_001': {Order_To_Product_Olist: ['prod_001','prod_003']},
+    'ord_002': {Order_To_Product_Olist: ['prod_002']},
+    'ord_003': {Order_To_Product_Olist: ['prod_001','prod_005']},
+    'ord_004': {Order_To_Product_Olist: ['prod_003']},
+    'ord_005': {Order_To_Product_Olist: ['prod_004','prod_002']},
+    'ord_006': {Order_To_Product_Olist: ['prod_005']},
+    'ic_001': {Order_To_Products_Instacart: ['pip_001','pip_002']},
+    'ic_002': {Order_To_Products_Instacart: ['pip_003','pip_004']},
+    'ic_003': {Order_To_Products_Instacart: ['pip_001','pip_003']},
+  }
+};
+
+var REL_PATHS = {
+  search_entities: ['single entity lookup'],
+  get_entity_by_id: ['entity id','->','full profile'],
+  get_entity_relationships: ['entity','->','relationship','->','related entities'],
+  aggregate_entities: ['entity type','->','group_by + metric'],
+  funnel_analysis: ['events_clickstream','->','GCI','->','orders_olist'],
+  sales_growth_weekly: ['orders_olist','->','Order_To_Product_Olist','->','products_olist'],
+  repeat_purchase_by_city: ['customers_olist','->','Customer_To_Order_Olist','->','orders_olist'],
+  customer_segmentation: ['GCI','->','customers_olist','->','orders_olist'],
+  time_to_purchase: ['events_clickstream','->','GCI','->','customers_olist','->','orders_olist'],
+  win_back_list: ['events_clickstream','->','GCI','->','customers_olist','(check orders)'],
+  market_basket: ['orders_olist','->','Order_To_Product_Olist','x2'],
+  delivery_performance: ['customers_olist','->','Customer_To_Order_Olist','->','orders_olist'],
+  cohort_retention: ['GCI','->','customers_olist','->','Customer_To_Order_Olist'],
+  demand_vs_sales: ['orders_instacart','->','Order_To_Products_Instacart','+','events_clickstream'],
+  avg_order_value_by_city: ['customers_olist','->','orders_olist','->','products_olist'],
+};
+
+// ── TOOL EXECUTOR ──────────────────────────────────────────────────────────
+function execTool(name, args) {
+  var R = RELTIO;
+  try {
+    if (name === 'search_entities') {
+      var et = args.entity_type || 'customers_olist';
+      var rows = (R[et] || []).slice();
+      var f = (args.filter || '').toLowerCase().replace(/.*==\s*['"]?/, '').replace(/['"]$/, '').trim();
+      if (f) {
+        rows = rows.filter(function(r) {
+          return Object.values(r.attributes || {}).some(function(v) {
+            return String(v).toLowerCase().includes(f);
+          });
+        });
+      }
+      return {success: true, count: rows.length, entities: rows.slice(0, args.limit || 10)};
+    }
+
+    if (name === 'get_entity_by_id') {
+      var id = (args.entity_id || '').split('/').pop();
+      var all = [].concat(R.customers_olist, R.orders_olist, R.products_olist, R.events_clickstream, R.Global_Customer_Identifier, R.orders_instacart, R.products_instacart);
+      var found = all.find(function(e) { return e.uri && e.uri.split('/').pop() === id; });
+      return found ? {success: true, entity: found} : {success: false, error: 'Entity not found: ' + id};
+    }
+
+    if (name === 'get_entity_relationships') {
+      var eid = (args.entity_id || '').split('/').pop();
+      var rt = args.relationship_type || '';
+      var rels = rt ? ((R.relationships[eid] || {})[rt] || []) : Object.values(R.relationships[eid] || {}).flat();
+      var allEnt = [].concat(R.customers_olist, R.orders_olist, R.products_olist, R.events_clickstream, R.orders_instacart, R.products_instacart);
+      var related = rels.map(function(rid) {
+        return allEnt.find(function(e) { return e.uri && e.uri.includes(rid); }) || {uri: 'entities/' + rid, attributes: {id: rid}};
+      });
+      return {success: true, entity_id: eid, relationship_type: rt, count: related.length, related_entities: related};
+    }
+
+    if (name === 'aggregate_entities') {
+      var et2 = args.entity_type || 'customers_olist';
+      var rows2 = R[et2] || [];
+      var gb = (args.group_by || [])[0];
+      var metric = args.metric || 'count';
+      var groups = {};
+      rows2.forEach(function(r) {
+        var key = gb ? (r.attributes[gb] || 'unknown') : 'ALL';
+        if (!groups[key]) groups[key] = [];
+        var mattr = args.metric_attribute;
+        groups[key].push(mattr ? parseFloat(r.attributes[mattr] || 0) : 1);
+      });
+      var results = Object.keys(groups).map(function(k) {
+        var vals = groups[k];
+        var mv = metric === 'count' ? vals.length : metric === 'sum' ? vals.reduce(function(a,b){return a+b;},0) : metric === 'avg' ? vals.reduce(function(a,b){return a+b;},0)/vals.length : metric === 'min' ? Math.min.apply(null,vals) : Math.max.apply(null,vals);
+        var obj = {group: k}; obj[metric] = Math.round(mv * 100) / 100;
+        return obj;
+      });
+      results.sort(function(a,b){ return b[metric] - a[metric]; });
+      return {success: true, total_scanned: rows2.length, results: results.slice(0, args.top_n || 10)};
+    }
+
+    if (name === 'funnel_analysis') {
+      var steps = args.funnel_steps || ['view','add_to_cart','purchase'];
+      var evts = R.events_clickstream;
+      var funnel = [];
+      var prev = null;
+      steps.forEach(function(step) {
+        var count = evts.filter(function(e) { return e.attributes.event === step; }).length;
+        funnel.push({step: step, count: count, conversion: prev ? (count/prev*100).toFixed(1)+'%' : '100%'});
+        prev = count;
+      });
+      var overall = funnel.length > 1 ? (funnel[funnel.length-1].count / funnel[0].count * 100).toFixed(1) + '%' : '100%';
+      return {success: true, total_events: evts.length, funnel: funnel, overall_conversion: overall};
+    }
+
+    if (name === 'sales_growth_weekly') {
+      return {success: true, total_products: 38, top_growing: [{product_id:'prod_electronics_01',prev_week:11,current_week:24,wow_growth_pct:118.2},{product_id:'prod_sports_03',prev_week:9,current_week:18,wow_growth_pct:100.0},{product_id:'prod_home_07',prev_week:22,current_week:33,wow_growth_pct:50.0}], declining: [{product_id:'prod_fashion_02',prev_week:14,current_week:2,wow_growth_pct:-85.7}]};
+    }
+
+    if (name === 'repeat_purchase_by_city') {
+      var cityMap = {};
+      R.customers_olist.forEach(function(c) {
+        var city = c.attributes.customer_city || 'Unknown';
+        var cid = c.attributes.customer_id;
+        var ordCount = Object.values(R.relationships).filter(function(_, i) { return Object.keys(R.relationships)[i].startsWith('') }).length;
+        var eid2 = c.uri.split('/').pop();
+        var ordIds = (R.relationships[eid2] || {}).Customer_To_Order_Olist || [];
+        if (!cityMap[city]) cityMap[city] = {total: 0, repeat: 0};
+        cityMap[city].total++;
+        if (ordIds.length > 1) cityMap[city].repeat++;
+      });
+      var results2 = Object.keys(cityMap).map(function(city) {
+        return {city: city, total_customers: cityMap[city].total, repeat_buyers: cityMap[city].repeat, repeat_rate_pct: cityMap[city].total > 0 ? Math.round(cityMap[city].repeat/cityMap[city].total*1000)/10 : 0};
+      }).sort(function(a,b){ return b.repeat_rate_pct - a.repeat_rate_pct; });
+      return {success: true, city_count: results2.length, results: results2};
+    }
+
+    if (name === 'customer_segmentation') {
+      var segs = {new:{count:0,customers:[]}, repeat:{count:0,customers:[]}, loyal:{count:0,customers:[]}};
+      R.customers_olist.forEach(function(c) {
+        var eid3 = c.uri.split('/').pop();
+        var ords = ((R.relationships[eid3] || {}).Customer_To_Order_Olist || []).length;
+        var seg = ords <= 1 ? 'new' : ords <= 5 ? 'repeat' : 'loyal';
+        segs[seg].count++;
+        if (segs[seg].customers.length < 2) segs[seg].customers.push({name: c.attributes.customer_name, city: c.attributes.customer_city, orders: ords});
+      });
+      return {success: true, total_analyzed: R.customers_olist.length, gci_total: R.Global_Customer_Identifier.length, cross_source_customers: R.Global_Customer_Identifier.filter(function(g){ return g.attributes.is_cross_source === 'true'; }).length, segments: segs};
+    }
+
+    if (name === 'time_to_purchase') {
+      return {success: true, cities_analyzed: 5, note: 'Based on clickstream view timestamps vs order_purchase_timestamp via GCI traversal', results: [{city:'Sao Paulo',sample_size:12,avg_days_to_purchase:2.3,min_days:0.5,max_days:8.1},{city:'Curitiba',sample_size:7,avg_days_to_purchase:3.8,min_days:1.0,max_days:12.4},{city:'Rio de Janeiro',sample_size:9,avg_days_to_purchase:5.1,min_days:0.8,max_days:19.2}]};
+    }
+
+    if (name === 'win_back_list') {
+      return {success: true, high_browsers_found: 23, win_back_candidates: 17, inactivity_days: args.inactivity_days || 60, candidates: [{visitor_id:'vis_1083',customer_name:'Joao Ferreira',city:'Porto Alegre',views_last_n_days:12,recent_purchase:false},{visitor_id:'vis_1142',customer_name:'Lucia Alves',city:'Salvador',views_last_n_days:9,recent_purchase:false},{visitor_id:'vis_1201',customer_name:'Pedro Santos',city:'Recife',views_last_n_days:7,recent_purchase:false},{visitor_id:'vis_1304',customer_name:'Beatriz Nunes',city:'Fortaleza',views_last_n_days:6,recent_purchase:false}]};
+    }
+
+    if (name === 'market_basket') {
+      var pairs = [];
+      Object.keys(R.relationships).forEach(function(eid4) {
+        var prods = (R.relationships[eid4].Order_To_Product_Olist || []);
+        for (var i = 0; i < prods.length; i++) {
+          for (var j = i+1; j < prods.length; j++) {
+            var pair = [prods[i], prods[j]].sort().join('|');
+            var existing = pairs.find(function(p){ return p.pair === pair; });
+            if (existing) existing.count++;
+            else pairs.push({pair: pair, product_a: prods[i], product_b: prods[j], count: 1});
+          }
+        }
+      });
+      pairs.sort(function(a,b){ return b.count - a.count; });
+      return {success: true, baskets_analyzed: Object.keys(R.relationships).filter(function(k){ return k.startsWith('ord'); }).length, unique_pairs_found: pairs.length, top_pairs: pairs.slice(0,8).map(function(p){ return {product_a:p.product_a,product_b:p.product_b,co_occurrences:p.count}; })};
+    }
+
+    if (name === 'delivery_performance') {
+      var cityDel = {};
+      R.customers_olist.forEach(function(c) {
+        var city2 = c.attributes.customer_city;
+        var eid5 = c.uri.split('/').pop();
+        var ordIds2 = (R.relationships[eid5] || {}).Customer_To_Order_Olist || [];
+        ordIds2.forEach(function(oid) {
+          var order = R.orders_olist.find(function(o){ return o.uri.includes(oid); });
+          if (!order) return;
+          if (!cityDel[city2]) cityDel[city2] = {total:0, delayed:0, cancelled:0};
+          cityDel[city2].total++;
+          var est = order.attributes.order_estimated_delivery_date;
+          var actual = order.attributes.order_delivered_customer_date;
+          if (est && actual && new Date(actual) > new Date(est)) cityDel[city2].delayed++;
+          if (order.attributes.order_status === 'canceled') cityDel[city2].cancelled++;
+        });
+      });
+      var delRes = Object.keys(cityDel).map(function(city3) {
+        var d = cityDel[city3];
+        return {city:city3, total_orders:d.total, delayed:d.delayed, delay_rate_pct:d.total>0?Math.round(d.delayed/d.total*1000)/10:0, cancellation_rate_pct:d.total>0?Math.round(d.cancelled/d.total*1000)/10:0};
+      }).sort(function(a,b){ return b.delay_rate_pct - a.delay_rate_pct; });
+      return {success: true, cities_analyzed: delRes.length, results: delRes};
+    }
+
+    if (name === 'cohort_retention') {
+      var src2 = {};
+      R.Global_Customer_Identifier.forEach(function(g){ var s = g.attributes.source; src2[s] = (src2[s]||0)+1; });
+      return {success: true, total_customers_analyzed: R.customers_olist.length, gci_total: R.Global_Customer_Identifier.length, cross_source_customers: R.Global_Customer_Identifier.filter(function(g){return g.attributes.is_cross_source==='true';}).length, sources_breakdown: src2, cohorts: [{cohort:'cohort_A',customers:8,returning:6,retention_rate_pct:75.0,top_city:'Sao Paulo'},{cohort:'cohort_B',customers:11,returning:7,retention_rate_pct:63.6,top_city:'Curitiba'},{cohort:'cohort_C',customers:9,returning:4,retention_rate_pct:44.4,top_city:'Rio de Janeiro'}]};
+    }
+
+    if (name === 'demand_vs_sales') {
+      var viewCounts = {};
+      R.events_clickstream.forEach(function(e) { if (e.attributes.event === 'view') { var iid = e.attributes.itemid; viewCounts[iid] = (viewCounts[iid]||0)+1; }});
+      var orderCounts = {};
+      Object.keys(R.relationships).forEach(function(eid6) { (R.relationships[eid6].Order_To_Products_Instacart||[]).forEach(function(pid){ orderCounts[pid]=(orderCounts[pid]||0)+1; }); });
+      var allPids = [...new Set([...Object.keys(viewCounts), ...Object.keys(orderCounts)])];
+      var res2 = allPids.map(function(pid) {
+        var prod = R.products_instacart.find(function(p){ return p.attributes.product_id === pid; });
+        var views = viewCounts[pid]||0; var orders = orderCounts[pid]||0;
+        return {product_id:pid, product_name:prod?prod.attributes.product_name:'unknown', views:views, orders:orders, signal:views>0&&orders===0?'rising_demand_flat_sales':orders>0?'converting':'no_activity'};
+      });
+      return {success: true, total_products: res2.length, rising_demand_flat_sales: res2.filter(function(r){return r.signal==='rising_demand_flat_sales';}), all_products: res2};
+    }
+
+    if (name === 'avg_order_value_by_city') {
+      var cityVals = {};
+      R.customers_olist.forEach(function(c) {
+        var city4 = c.attributes.customer_city;
+        var eid7 = c.uri.split('/').pop();
+        var ordIds3 = (R.relationships[eid7]||{}).Customer_To_Order_Olist||[];
+        ordIds3.forEach(function(oid2) {
+          var prodIds = (R.relationships[oid2]||{}).Order_To_Product_Olist||[];
+          var val = prodIds.reduce(function(sum, pid) {
+            var p = R.products_olist.find(function(pr){ return pr.uri.includes(pid); });
+            return sum + (p ? parseFloat(p.attributes.product_weight_g||0) : 500);
+          }, 0);
+          if (!cityVals[city4]) cityVals[city4] = [];
+          if (val > 0) cityVals[city4].push(val);
+        });
+      });
+      var aovRes = Object.keys(cityVals).filter(function(c){ return cityVals[c].length>0; }).map(function(city5) {
+        var vals = cityVals[city5];
+        return {city:city5, sample_orders:vals.length, avg_order_weight_g:Math.round(vals.reduce(function(a,b){return a+b;},0)/vals.length)};
+      }).sort(function(a,b){ return b.avg_order_weight_g - a.avg_order_weight_g; });
+      return {success: true, cities: aovRes.length, results: aovRes};
+    }
+
+    return {success: false, error: 'Unknown tool: ' + name};
+  } catch(e) {
+    return {success: false, error: 'Tool error: ' + e.message};
+  }
+}
+
+// ── MCP TOOL DEFINITIONS ───────────────────────────────────────────────────
+var TOOLS = [
+  {type:'function',function:{name:'search_entities',description:'Search any Reltio entity type. Supports customers_olist, orders_olist, products_olist, orders_instacart, products_instacart, events_clickstream, Global_Customer_Identifier. Use filter param for attribute matching e.g. "customer_name==Paul Lee" or "order_status==delivered". For questions like "what did customer X buy", first call this to find the customer, then call get_entity_relationships.',parameters:{type:'object',properties:{entity_type:{type:'string'},filter:{type:'string'},limit:{type:'integer'}},required:['entity_type']}}},
+  {type:'function',function:{name:'get_entity_by_id',description:'Fetch complete details of a single entity by its short ID (last segment of URI e.g. 1Cc6ssf). Use after search_entities.',parameters:{type:'object',properties:{entity_id:{type:'string'}},required:['entity_id']}}},
+  {type:'function',function:{name:'get_entity_relationships',description:'Traverse Reltio graph relationships. relationship_type options: Customer_To_Order_Olist (customer->orders), Order_To_Product_Olist (order->products), Order_To_Products_Instacart (instacart order->products), customerOlist_to_eventsClickstream (customer->events). Use this to answer "what did X buy", "show orders for customer Y", "what products are in order Z". Always call after search_entities to traverse the graph.',parameters:{type:'object',properties:{entity_id:{type:'string',description:'Short entity ID from URI e.g. 1Cc6ssf or ord_001'},relationship_type:{type:'string'},limit:{type:'integer'}},required:['entity_id','relationship_type']}}},
+  {type:'function',function:{name:'aggregate_entities',description:'Group and count/sum/average entities. Use for "how many X per Y", "count orders by status", "average weight by category".',parameters:{type:'object',properties:{entity_type:{type:'string'},group_by:{type:'array',items:{type:'string'}},metric:{type:'string',enum:['count','sum','avg','min','max']},metric_attribute:{type:'string'},filter:{type:'string'},top_n:{type:'integer'}},required:['entity_type','metric']}}},
+  {type:'function',function:{name:'funnel_analysis',description:'Conversion funnel from events_clickstream through GCI to orders. Use for "conversion rate", "view to purchase funnel".',parameters:{type:'object',properties:{funnel_steps:{type:'array',items:{type:'string'}}},required:['funnel_steps']}}},
+  {type:'function',function:{name:'sales_growth_weekly',description:'Week-over-week product sales growth. Traverses orders->products.',parameters:{type:'object',properties:{weeks:{type:'integer'},top_n:{type:'integer'}},required:[]}}},
+  {type:'function',function:{name:'repeat_purchase_by_city',description:'Repeat purchase rate by city. Traverses customers->orders.',parameters:{type:'object',properties:{},required:[]}}},
+  {type:'function',function:{name:'customer_segmentation',description:'Segment customers new/repeat/loyal using GCI + order count.',parameters:{type:'object',properties:{group_by_category:{type:'boolean'}},required:[]}}},
+  {type:'function',function:{name:'time_to_purchase',description:'Average time from first clickstream view to purchase.',parameters:{type:'object',properties:{group_by:{type:'array',items:{type:'string'}}},required:[]}}},
+  {type:'function',function:{name:'win_back_list',description:'High-browse zero-purchase customers for re-engagement campaigns.',parameters:{type:'object',properties:{inactivity_days:{type:'integer'},min_views:{type:'integer'}},required:[]}}},
+  {type:'function',function:{name:'market_basket',description:'Top co-purchased product pairs. Traverses orders->products x2.',parameters:{type:'object',properties:{customer_segment:{type:'string'},top_n:{type:'integer'}},required:[]}}},
+  {type:'function',function:{name:'delivery_performance',description:'Delivery delay rate by city from order date comparisons.',parameters:{type:'object',properties:{},required:[]}}},
+  {type:'function',function:{name:'cohort_retention',description:'Customer retention by cohort using GCI cross-source identity.',parameters:{type:'object',properties:{segment_by:{type:'string'}},required:[]}}},
+  {type:'function',function:{name:'demand_vs_sales',description:'Rising demand (views) vs flat sales (orders) from Instacart + clickstream.',parameters:{type:'object',properties:{},required:[]}}},
+  {type:'function',function:{name:'avg_order_value_by_city',description:'Average order value by city traversing customers->orders->products.',parameters:{type:'object',properties:{quarter:{type:'string'}},required:[]}}},
+];
+
+var SYSTEM_PROMPT = 'You are a senior e-commerce data analyst agent connected to a Reltio MDM platform.\n\nAvailable mock data:\n- customers_olist: Paul Lee (Sao Paulo/SP), Ana Lima (Rio de Janeiro/RJ), Carlos Mendes (Curitiba/PR), Maria Costa (Belo Horizonte/MG), Joao Ferreira (Porto Alegre/RS), Lucia Alves (Salvador/BA)\n- orders_olist: 6 orders (statuses: delivered x3, shipped x1, canceled x1, processing x1). Paul Lee has 2 orders (ord_001 with electronics+sports, ord_002 with stationery).\n- products_olist: electronics (850g), stationery (120g), sports leisure (340g), home comfort (1200g), fashion (200g)\n- events_clickstream: visitor 483605 did view->add_to_cart->purchase on item 365166; visitor 291034 viewed item 14992; visitor 183901 viewed item 32877 twice\n- Global_Customer_Identifier: 3 records, 2 cross-source customers\n- Instacart data: 3 orders, 4 products (Yellow Zucchini, Organic Lemons, Organic Strawberries, Sparkling Water)\n\nRelationships: Customer_To_Order_Olist, Order_To_Product_Olist, Order_To_Products_Instacart, customerOlist_to_eventsClickstream\n\nFor "What did customer X buy?": call search_entities(customers_olist, filter=name), then get_entity_relationships with Customer_To_Order_Olist, then get_entity_relationships with Order_To_Product_Olist for each order.\nFor generic lookups: use search_entities with appropriate entity_type and filter.\nFor analytics: use the specialized analytical tools.\n\nAlways call multiple tools when needed. Provide clear structured answers with actual data values. Use markdown formatting.';
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+var GROQ_KEY = '';
+var HISTORY = [];
+var LOADING = false;
+
+var SCENARIOS = [
+  "What did customer Paul Lee buy?",
+  "Show me all delivered orders",
+  "Which products are in the electronics category?",
+  "What is the conversion funnel from view to purchase?",
+  "Which cities have the highest repeat purchase rate?",
+  "Which products are growing fastest week-over-week?",
+  "Which customers should I target for win-back campaigns?",
+  "Show me market basket analysis for repeat buyers",
+  "Segment customers into new, repeat, and loyal tiers",
+  "What is the average time from first view to purchase?",
+  "Show me delivery delay rates by city",
+  "Which products have rising demand but flat sales?",
+  "What is the average order value by city?",
+  "Show me customer retention by cohort",
+  "How many customers are in each state?",
+  "What events has visitor 483605 generated?",
+  "Show me all orders with status canceled",
+  "Which products are most frequently bought together?",
+  "Is customer Paul Lee a cross-source customer?",
+];
+
+// ── CONNECT ────────────────────────────────────────────────────────────────
+function getModel() {
+  return document.getElementById('model-select').value || 'llama-3.3-70b-versatile';
+}
+
+function onModelChange() {
+  var m = getModel();
+  var logoSub = document.getElementById('logo-sub');
+  if (logoSub) logoSub.innerHTML = m + ' &nbsp;·&nbsp; mock Reltio data &nbsp;·&nbsp; full relationship traversal';
+  var wm = document.getElementById('welcome-model');
+  if (wm) wm.textContent = m;
+  if (GROQ_KEY) setStatus('connected · ' + m, 'on');
+}
+
+function connect() {
+  var key = document.getElementById('groq-key').value.trim();
+  if (!key || !key.startsWith('gsk_')) {
+    setStatus('invalid key — must start with gsk_', 'err');
+    return;
+  }
+  GROQ_KEY = key;
+  var model = getModel();
+  setStatus('connected · ' + model, 'on');
+  document.getElementById('send-btn').disabled = false;
+  document.getElementById('user-input').placeholder = 'Ask anything about customers, orders, products, events...';
+  sysMsg('Connected to Groq. Using ' + model + ' with mock Reltio data. Try: "What did customer Paul Lee buy?"');
+}
+
+function setStatus(text, state) {
+  var p = document.getElementById('status-pill');
+  var t = document.getElementById('status-text');
+  t.textContent = text;
+  p.className = 'status-pill sp-' + state;
+}
+
+// ── SEND ───────────────────────────────────────────────────────────────────
+async function sendMessage(txt) {
+  if (LOADING || !GROQ_KEY) return;
+  var inp = document.getElementById('user-input');
+  var msg = txt || inp.value.trim();
+  if (!msg) return;
+  inp.value = '';
+  inp.style.height = 'auto';
+  removeWelcome();
+  appendUserMsg(msg);
+  HISTORY.push({role: 'user', content: msg});
+  LOADING = true;
+  document.getElementById('send-btn').disabled = true;
+  var thinkId = appendThinking('Calling Groq...');
+  try {
+    var messages = [{role: 'system', content: SYSTEM_PROMPT}].concat(HISTORY);
+    for (var iter = 0; iter < 10; iter++) {
+      removeEl(thinkId);
+      var resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {'Authorization': 'Bearer ' + GROQ_KEY, 'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          model: getModel(),
+          messages: messages,
+          tools: TOOLS,
+          tool_choice: 'auto',
+          temperature: 0.2,
+          max_tokens: 2500
+        })
+      });
+      if (!resp.ok) {
+        var errText = await resp.text();
+        throw new Error('Groq API ' + resp.status + ': ' + errText.slice(0, 200));
+      }
+      var data = await resp.json();
+      var m = data.choices[0].message;
+      messages.push(m);
+      if (m.tool_calls && m.tool_calls.length > 0) {
+        for (var tc of m.tool_calls) {
+          var tname = tc.function.name;
+          var targs = {};
+          try { targs = JSON.parse(tc.function.arguments); } catch(e) {}
+          appendToolCard(tname, targs);
+          var result = execTool(tname, targs);
+          updateLastBadge(result);
+          messages.push({role: 'tool', tool_call_id: tc.id, content: JSON.stringify(result)});
+        }
+        thinkId = appendThinking('Processing results...');
+      } else {
+        var answer = m.content || '';
+        appendAIMsg(answer);
+        HISTORY.push({role: 'assistant', content: answer});
+        break;
+      }
+    }
+  } catch(e) {
+    removeEl(thinkId);
+    sysMsg('Error: ' + e.message);
+  } finally {
+    LOADING = false;
+    document.getElementById('send-btn').disabled = false;
+  }
+}
+
+function quickAsk(q) {
+  if (!GROQ_KEY) { sysMsg('Please connect your Groq API key first.'); return; }
+  sendMessage(q);
+}
+
+// ── UI HELPERS ─────────────────────────────────────────────────────────────
+function removeWelcome() {
+  var w = document.getElementById('welcome-screen');
+  if (w) w.remove();
+}
+
+function appendUserMsg(text) {
+  var d = createMsg('user');
+  d.innerHTML = '<div class="msg-label">You</div><div class="bubble">' + esc(text) + '</div>';
+  getMsgs().appendChild(d);
+  scroll();
+}
+
+function appendAIMsg(text) {
+  var d = createMsg('ai');
+  d.innerHTML = '<div class="msg-label">Agent</div><div class="bubble">' + mdRender(text) + '</div>';
+  getMsgs().appendChild(d);
+  scroll();
+}
+
+function sysMsg(text) {
+  var d = createMsg('ai');
+  d.innerHTML = '<div class="sys-msg">' + esc(text) + '</div>';
+  getMsgs().appendChild(d);
+  scroll();
+}
+
+function appendToolCard(toolName, args) {
+  var path = REL_PATHS[toolName] || ['entity lookup'];
+  var pathHtml = path.map(function(p) {
+    return (p === '->' || p === '+' || p.startsWith('x') || p.startsWith('('))
+      ? '<span class="tp-arrow">' + p + '</span>'
+      : '<span class="tp-node">' + p + '</span>';
+  }).join('');
+  var d = createMsg('ai');
+  d.id = 'last-tc';
+  d.innerHTML = '<div class="msg-label">Tool call</div>' +
+    '<div class="tool-card">' +
+      '<div class="tc-header"><span class="tc-icon">&#9881;</span>' + toolName + '</div>' +
+      '<div class="tc-path">' + pathHtml + '</div>' +
+      '<div class="tc-args">' + esc(JSON.stringify(args, null, 2).slice(0, 200)) + '</div>' +
+      '<div><span class="tc-badge b-wait" id="last-badge">&#9203; running...</span></div>' +
+    '</div>';
+  getMsgs().appendChild(d);
+  scroll();
+}
+
+function updateLastBadge(result) {
+  var b = document.getElementById('last-badge');
+  if (!b) return;
+  b.id = '';
+  if (result.success !== false) {
+    b.className = 'tc-badge b-ok';
+    var info = result.count !== undefined ? result.count + ' records' : result.cities !== undefined ? result.cities + ' cities' : result.total_products !== undefined ? result.total_products + ' products' : 'done';
+    b.textContent = '✓ success — ' + info;
+  } else {
+    b.className = 'tc-badge b-err';
+    b.textContent = '✕ ' + (result.error || 'failed');
+  }
+}
+
+function appendThinking(label) {
+  var id = 'think-' + Date.now();
+  var d = createMsg('ai');
+  d.id = id;
+  d.innerHTML = '<div class="msg-label">Agent</div>' +
+    '<div class="thinking"><div class="dots"><span></span><span></span><span></span></div>' + esc(label || 'Thinking...') + '</div>';
+  getMsgs().appendChild(d);
+  scroll();
+  return id;
+}
+
+function createMsg(role) {
+  var d = document.createElement('div');
+  d.className = 'msg ' + role;
+  return d;
+}
+
+function getMsgs() { return document.getElementById('messages'); }
+function scroll() { var m = getMsgs(); m.scrollTop = m.scrollHeight; }
+function removeEl(id) { var e = document.getElementById(id); if (e) e.remove(); }
+
+function esc(t) {
+  return String(t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function mdRender(text) {
+  if (!text) return '';
+  return esc(text)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^# (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^\- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>\n?)+/g, function(s) { return '<ul>' + s + '</ul>'; })
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+// ── POPULATE SCENARIOS ─────────────────────────────────────────────────────
+(function() {
+  var list = document.getElementById('scenarios-list');
+  SCENARIOS.forEach(function(s, i) {
+    var btn = document.createElement('button');
+    btn.className = 'sc-btn';
+    btn.title = s;
+    btn.innerHTML = '<span class="sc-num">' + (i < 9 ? '0' : '') + (i + 1) + '</span>' + s.slice(0, 48) + (s.length > 48 ? '...' : '');
+    btn.onclick = function() { quickAsk(s); };
+    list.appendChild(btn);
+  });
+})();
+</script>
+</body>
+</html>
